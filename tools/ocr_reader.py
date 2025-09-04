@@ -3,10 +3,6 @@
 import os
 from google.cloud import vision
 
-# Import fungsi-fungsi lama (hanya untuk blok testing di bawah)
-from tools.data_parser import parse_struk_belanja
-from tools.sheets_writer import simpan_ke_sheets
-
 from dotenv import load_dotenv
 load_dotenv() 
 

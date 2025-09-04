@@ -7,7 +7,7 @@ import os
 load_dotenv()
 
 # Import handler WhatsApp
-from services.whatsapp_handler import handle_whatsapp_message
+from tools.whatsapp_handler import handle_whatsapp_message
 
 # Inisialisasi Flask
 app = Flask(__name__)
