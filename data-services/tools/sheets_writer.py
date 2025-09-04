@@ -4,13 +4,14 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import re
 import os
-
+import locale
 from dotenv import load_dotenv
 load_dotenv() 
 
-
 NAMA_FILE_KREDENSIAL = os.environ.get("NAMA_FILE_KREDENSIAL")
 NAMA_FILE_SHEETS = os.environ.get("NAMA_FILE_SHEETS")
+LOCALE_DATETIME = os.environ.get("LOCALE_DATETIME")
+locale.setlocale(locale.LC_TIME, LOCALE_DATETIME)
 
 def simpan_ke_sheets(data: dict):
     """
@@ -27,6 +28,7 @@ def simpan_ke_sheets(data: dict):
         # Buka Spreadsheet
         spreadsheet = client.open(NAMA_FILE_SHEETS)
         nama_bulan = datetime.now().strftime('%B')
+        print(f"📅 Menggunakan sheet bulan: {nama_bulan}")
         
         try:
             sheet = spreadsheet.worksheet(nama_bulan)
