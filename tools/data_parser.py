@@ -1,4 +1,4 @@
-# services/hybrid_parser.py
+# services/hybrid_parser.py (Upgraded)
 import re
 import os
 import json
@@ -9,8 +9,7 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
     raise ValueError("GOOGLE_API_KEY belum diset di .env")
 genai.configure(api_key=GOOGLE_API_KEY)
-# Model AI yang bisa "melihat" gambar
-vision_model = genai.GenerativeModel('gemini-2.5-flash')
+vision_model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- LAPIS 1: SI CEPAT (REGEX PRESISI TINGGI) ---
 def _bersihkan_nominal(s: str) -> str:
@@ -27,10 +26,8 @@ def _bersihkan_nominal(s: str) -> str:
         return re.sub(r'[^0-9]', '', s)
 
 def _parse_with_regex(text: str) -> dict | None:
-    """Mencoba parsing cepat dengan regex untuk format umum."""
+    # Fungsi ini tidak diubah, tetap fokus pada kecepatan
     text_lower = text.lower()
-    
-    # Coba pola BCA m-transfer
     if "m-transfer" in text_lower and "berhasil" in text_lower:
         try:
             penerima_match = re.search(r"\n([A-Z\s]+)\nRp", text)
@@ -43,9 +40,8 @@ def _parse_with_regex(text: str) -> dict | None:
                 print("✅ Terdeteksi oleh Regex Cepat: BCA Legacy")
                 return {"jumlah": jumlah, "penerima": penerima, "tipe": "Transfer BCA"}
         except Exception:
-            pass # Gagal, lanjut ke pola lain
+            pass
 
-    # Coba pola Blu
     if "transaksi berhasil" in text_lower and "nominal" in text_lower:
         try:
             penerima_match = re.search(r"\n([A-Z\s]{4,})\n\s*(?:BCA|No\. Rek)", text)
@@ -56,9 +52,9 @@ def _parse_with_regex(text: str) -> dict | None:
                 print("✅ Terdeteksi oleh Regex Cepat: BLU")
                 return {"jumlah": jumlah, "penerima": penerima, "tipe": "Transfer BLU"}
         except Exception:
-            pass # Gagal, lanjut ke AI
+            pass
 
-    return None # Regex menyerah
+    return None
 
 # --- LAPIS 2: SI PINTAR (AI VISION) ---
 def _parse_with_vision_ai(image_bytes: bytes) -> dict | None:
@@ -71,9 +67,10 @@ def _parse_with_vision_ai(image_bytes: bytes) -> dict | None:
     1. `jumlah`: Total akhir pembayaran atau jumlah transfer. Jangan ambil subtotal.
     2. `penerima`: Nama toko, merchant, atau penerima transfer.
     3. `tipe`: Klasifikasikan sebagai "Struk Belanja", "Transfer BCA", "Transfer BLU", atau "Lainnya".
+    4. `catatan`: Deskripsi, berita, atau catatan transfer jika ada. Jika tidak ada, kembalikan null.
 
     Berikan jawaban HANYA dalam format JSON yang valid. Jika tidak yakin, kembalikan null untuk field tersebut.
-    Contoh: {"jumlah": "191475", "penerima": "Cafe Bee", "tipe": "Struk Belanja"}
+    Contoh: {"jumlah": "191475", "penerima": "Cafe Bee", "tipe": "Struk Belanja", "catatan": "Bayar kopi"}
     """
     
     try:
@@ -81,26 +78,29 @@ def _parse_with_vision_ai(image_bytes: bytes) -> dict | None:
         cleaned_response = response.text.replace("```json", "").replace("```", "").strip()
         print(f"✅ AI Vision berhasil menganalisis. Respon: {cleaned_response}")
         parsed_data = json.loads(cleaned_response)
-        return parsed_data
+        if parsed_data and parsed_data.get("jumlah") and parsed_data.get("penerima"):
+            return parsed_data
+        return None
     except Exception as e:
         print(f"❌ Gagal saat memanggil AI Vision: {e}")
         return None
 
 # --- Fungsi Utama (Orkestrator) ---
-def parse_receipt(text_ocr: str, image_bytes: bytes) -> dict | None:
+def parse_receipt(text_ocr: str, image_bytes: bytes, user_caption: str = "") -> dict | None:
     """
     Orkestrator utama yang menjalankan strategi benteng 3 lapis.
+    BARU: Menerima 'user_caption' untuk prioritas catatan.
     """
-    # LAPIS 1: Coba Regex dulu
     data = _parse_with_regex(text_ocr)
-    if data:
-        return data
+    if not data:
+        data = _parse_with_vision_ai(image_bytes)
     
-    # LAPIS 2: Kalau Regex gagal, panggil AI Vision
-    data = _parse_with_vision_ai(image_bytes)
-    if data and data.get("jumlah") and data.get("penerima"):
+    if data:
+        if user_caption:
+            data['catatan'] = user_caption
+        elif 'catatan' not in data:
+            data['catatan'] = None
         return data
         
-    # LAPIS 3: Kalau semua gagal, nyerah
     print("❌ Semua metode parsing gagal.")
     return None
