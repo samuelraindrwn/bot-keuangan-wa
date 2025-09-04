@@ -1,0 +1,25 @@
+# --- File Kredensial & Rahasia ---
+# JANGAN PERNAH UPLOAD FILE INI KE GITHUB!
+credentials.json
+*.env
+.env
+
+# --- Folder Cache Python ---
+# Folder ini dibuat otomatis sama Python dan gak perlu di-upload
+__pycache__/
+*.pyc
+
+# --- Folder Resource/Upload User ---
+# Mengabaikan semua file di dalam folder resource
+# biar struk belanjaan user gak ikut ke-upload
+tools/resource/
+
+# --- File Sementara & Sistem Operasi ---
+.DS_Store
+Thumbs.db
+
+# --- Folder Virtual Environment ---
+# Jika kamu menggunakan virtual environment seperti venv
+venv/
+env/
+.venv/
