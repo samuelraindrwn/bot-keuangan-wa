@@ -1,4 +1,3 @@
-# services/whatsapp_handler.py (Final Fixed Version)
 import os
 import requests
 from PIL import Image
@@ -143,16 +142,12 @@ def handle_whatsapp_message(request, twilio_sid, twilio_token):
 
     message_body = (request.form.get("Body") or "").strip()
     num_media = request.form.get("NumMedia", "0")
+
+    # Kadang Twilio kirim ghost media (NumMedia=1 tapi URL kosong)
     media_url = request.form.get("MediaUrl0")
-
-    # ✅ Ghost filter: drop kalau semuanya kosong
-    if not message_body and (num_media == "0" or not media_url):
-        print("⚠️ Ghost event dari Twilio, di-skip.")
-        return None
-
-    # ✅ Real media check
     is_real_media = num_media != "0" and media_url and media_url.strip()
 
+    # Prioritaskan teks kalau ada
     if message_body:
         pesan_balasan = _handle_text_message(message_body)
     elif is_real_media:
@@ -162,5 +157,3 @@ def handle_whatsapp_message(request, twilio_sid, twilio_token):
 
     print(f"✅ Pesan balasan dikirim: \"{pesan_balasan}\"")
     return pesan_balasan
-
-
