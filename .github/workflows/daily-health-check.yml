@@ -19,8 +19,8 @@ jobs:
       - name: 2. Create or Update Health Check Log
         run: |
           # Konfigurasi user git buat commit
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.name 'samuelraindrwn'
+          git config --global user.email 'samuelraylovers1@gmail.com'
 
           # Perintah ini akan nambahin baris baru ke HEALTH_CHECK.log
           # Isinya nunjukkin kalo pengecekan otomatis berhasil di tanggal & jam tertentu.
