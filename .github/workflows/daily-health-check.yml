@@ -1,0 +1,32 @@
+name: Daily Health Check Commit
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  auto_commit_job:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Create or Update Health Check Log
+        run: |
+          # Konfigurasi user git buat commit
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # Perintah ini akan nambahin baris baru ke HEALTH_CHECK.log
+          # Isinya nunjukkin kalo pengecekan otomatis berhasil di tanggal & jam tertentu.
+          echo "✅ Automated daily health check ran successfully at $(date)" >> HEALTH_CHECK.log
+
+          # Add, commit, dan push perubahan
+          git add HEALTH_CHECK.log
+          git commit -m "chore(bot): 🤖 Daily health check log"
+          git push
